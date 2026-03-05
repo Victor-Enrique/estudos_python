@@ -1,0 +1,30 @@
+import requests
+from bs4 import BeautifulSoup
+from reportlab.pdfgen import canvas
+
+URL = 'https://www.newbalance.com.br/calendario-nb'
+page = requests.get(URL, headers={"User-Agent": "Requests"})
+
+soup = BeautifulSoup(page.content, 'html.parser')
+
+job_elements = soup.find_all('p', class_ = 'lh-copy newbrasil-custom-components-0-x-paragraph')
+
+tenis_disponiveis = []
+for element in job_elements:
+    tenis_disponiveis.append(element.text)
+
+print(tenis_disponiveis)
+
+c = canvas.Canvas("tenis_disponiveis.pdf")
+c.setFront('Helvitifca', 12)
+c.drawString(100,750,"TÊNIS DISPONIVEIS")
+
+horizontal = 100
+vertical = 700
+
+for item in tenis_disponiveis:
+    c.drawString(horizontal, vertical, item)
+    vertical -= 20
+
+c.showPage()
+c.save()
