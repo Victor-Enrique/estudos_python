@@ -1,0 +1,8 @@
+def square_sum(numbers):
+    total = 0
+    soma = 0
+    for numero in numbers:
+        soma = soma + (numero ** 2)
+        total = soma
+    return total
+    
