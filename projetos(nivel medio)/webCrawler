@@ -1,30 +1,78 @@
 import requests
 from bs4 import BeautifulSoup
 from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.utils import simpleSplit
+from datetime import datetime
+import sys
 
 URL = 'https://www.newbalance.com.br/calendario-nb'
-page = requests.get(URL, headers={"User-Agent": "Requests"})
 
-soup = BeautifulSoup(page.content, 'html.parser')
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+}
 
-job_elements = soup.find_all('p', class_ = 'lh-copy newbrasil-custom-components-0-x-paragraph')
+def extrair_tenis():
+    """Faz o scraping da página e retorna uma lista com os nomes dos tênis."""
+    try:
+        response = requests.get(URL, headers=HEADERS, timeout=10)
+        response.raise_for_status()  # Levanta exceção para códigos de erro HTTP
+    except requests.exceptions.RequestException as e:
+        print(f"Erro ao acessar a página: {e}")
+        sys.exit(1)
 
-tenis_disponiveis = []
-for element in job_elements:
-    tenis_disponiveis.append(element.text)
+    soup = BeautifulSoup(response.content, 'html.parser')
 
-print(tenis_disponiveis)
+    elementos = soup.find_all('p', class_='lh-copy newbrasil-custom-components-0-x-paragraph')
 
-c = canvas.Canvas("tenis_disponiveis.pdf")
-c.setFront('Helvitifca', 12)
-c.drawString(100,750,"TÊNIS DISPONIVEIS")
+    tenis = [elem.get_text(strip=True) for elem in elementos if elem.get_text(strip=True)]
 
-horizontal = 100
-vertical = 700
+    return tenis
 
-for item in tenis_disponiveis:
-    c.drawString(horizontal, vertical, item)
-    vertical -= 20
+def gerar_pdf(lista_tenis, nome_arquivo="tenis_disponiveis.pdf"):
+    """Gera um PDF com a lista de tênis e informações adicionais."""
+    c = canvas.Canvas(nome_arquivo, pagesize=A4)
+    width, height = A4
 
-c.showPage()
-c.save()
+    c.setFont("Helvetica-Bold", 16)
+    c.drawString(50, height - 50, "TÊNIS DISPONÍVEIS - NEW BALANCE")
+
+    c.setFont("Helvetica", 10)
+    data_hora = datetime.now().strftime("%d/%m/%Y %H:%M")
+    c.drawString(50, height - 70, f"Consulta realizada em: {data_hora}")
+
+    c.line(50, height - 80, width - 50, height - 80)
+
+    # Configurações para a lista
+    c.setFont("Helvetica", 12)
+    y = height - 100
+    line_height = 20
+    margin = 50
+    max_width = width - 2 * margin
+
+    if not lista_tenis:
+        c.drawString(margin, y, "Nenhum tênis encontrado no momento.")
+    else:
+        for idx, tenis in enumerate(lista_tenis, start=1):
+            # Quebra linhas longas para caber na página
+            linhas = simpleSplit(tenis, "Helvetica", 12, max_width)
+            for linha in linhas:
+                if y < 50:  # Se atingir o fim da página, cria nova
+                    c.showPage()
+                    c.setFont("Helvetica", 12)
+                    y = height - 50
+                c.drawString(margin, y, f"{idx}. {linha}" if linha == linhas[0] else f"   {linha}")
+                y -= line_height
+            # Espaço extra entre itens
+            y -= 5
+
+    c.save()
+    print(f"PDF gerado com sucesso: {nome_arquivo}")
+
+if __name__ == "__main__":
+    tenis_disponiveis = extrair_tenis()
+    print("Tênis encontrados:")
+    for i, t in enumerate(tenis_disponiveis, 1):
+        print(f"{i}. {t}")
+
+    gerar_pdf(tenis_disponiveis)
