@@ -1,3 +1,5 @@
+from math import sqrt, log2
+
 def soma(a, b):
     return a + b
 
@@ -10,12 +12,20 @@ def multiplicacao(a, b):
 def divisao(a, b):
     return a / b
 
+def raiz_quadrada(a):
+    return sqrt(a)
+
+def logaritmo(a):
+    return log2(a)
+
 def exibir_menu():
     print("\n=== CALCULADORA ===")
     print("1 - Soma")
     print("2 - Subtração")
     print("3 - Multiplicação")
     print("4 - Divisão")
+    print("5 - Raiz quadrada (do resultado atual)")
+    print("6 - Logaritmo com base 2 (do resultado atual)")
     print("0 - Sair")
 
 def formartar_resultado(resultado):
@@ -26,7 +36,7 @@ def formartar_resultado(resultado):
     return resultado
 
 def main():
-    opcoes_validas = {"1", "2", "3", "4"}
+    opcoes_validas = {"1", "2", "3", "4", "5", "6", "0"}
 
     try:
         resultado_atual = float(input("Digite o valor inicial: "))
@@ -46,7 +56,7 @@ def main():
 
         if opcao_escolhida not in opcoes_validas:
             print("\nOpção inválida.")
-            print("Opções válidas -> 1, 2, 3, 4 e 0\n")
+            print("Opções válidas -> 1, 2, 3, 4, 5, 6 e 0\n")
 
             continue 
 
@@ -67,6 +77,16 @@ def main():
                 resultado_atual = divisao(resultado_atual, valor_operando)
             except ZeroDivisionError:
                 print("Não se pode dividir com zero.")
+        elif opcao_escolhida == "5":
+            try:
+                resultado_atual =  raiz_quadrada(resultado_atual)
+            except ValueError:
+                print("Não é possível calcular a raiz quadrada de um número negativo")
+        elif opcao_escolhida == "6":
+            try:
+                resultado_atual = logaritmo(resultado_atual)
+            except ValueError:
+                print("Logaritmo só é definido para número positivo e diferente de zero.")
 
     print("Encerrando a calculadora. Até mais!")
 
